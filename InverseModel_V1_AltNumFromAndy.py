@@ -70,6 +70,13 @@ def LoadData(skiptoprows):
     Data[:,3] = Data[:,1]+0.538
     return Data
 
+def LoadDataSc(skiptoprows):
+    #Data = np.genfromtxt('RawData.txt', dtype=float, delimiter='\t')
+    #Data = np.genfromtxt('Sc1.txt', dtype=float, delimiter='\t')
+    Data = np.genfromtxt('Sc5.txt', dtype=float, delimiter='\t') # This is the scenario we picked for the 07/2020 submission
+    Data = Data[skiptoprows:,:]
+    return Data
+
 def DataDerivative(Data):
     dX = np.zeros((Data.shape(0),2))
     for row in range(len(X)-1):
@@ -165,10 +172,14 @@ def IntegrateConstFin(pd,Fin,Sr0,dsw0,din,eps):
 
 ########### MODEL #####################
 
-Data = LoadData(0)
-(p,pd,xp,error) = FitPoly(Data, 3, 7)
+#Data = LoadData(0)
+col = 3
+Data = LoadDataSc(0)
+col = 1
 
-dmean = np.mean(Data[:,3])
+(p,pd,xp,error) = FitPoly(Data, col, 7)
+
+dmean = np.mean(Data[:,col])
 dmean = np.mean(p(xp))
 print(dmean)
 
@@ -184,7 +195,7 @@ print("din: ",din)
 
 if (True):
     
-    Nruns = 30
+    Nruns = 3
     Model = np.zeros((351,7,Nruns+1))
     ModelDT = np.zeros((351,7,Nruns+1))
     ddiff = np.zeros(Nruns+1)
@@ -193,15 +204,15 @@ if (True):
     ddiff[0] = din - (dmean + eps)
 
     for run in range(1,Nruns+1):
-        dinE = din + 0.01*np.random.randn()
-        epsE = eps + 0.005*np.random.randn()
-        ddiff[run] = dinE - (dmean + epsE)
-        (Model[:,:,run],ModelDT[:,:,run]) = IntegrateConstFin(pd,Fin,Sr0,dsw0,dinE,epsE)
-        
-        #Model = np.stack((Model,NewModel),axis=2)
+        while True:
+            dinE = din + 0.01*np.random.randn()
+            epsE = eps + 0.005*np.random.randn()
+            ddiff[run] = dinE - (dmean + epsE)
+            (Model[:,:,run],ModelDT[:,:,run]) = IntegrateConstFin(pd,Fin,Sr0,dsw0,dinE,epsE)
+            #Model = np.stack((Model,NewModel),axis=2)
+            if (np.min(Model[:,1,run])>0):
+                break  
         print("Done with run {0}".format(run))
-    
-    
 
     
     plt.figure(1,figsize=(10,8))
@@ -213,7 +224,7 @@ if (True):
     #    else:
     #        plt.plot(Model[:,0,run],Model[:,4,run],'-b')
     plt.plot(Model[:,0,0],Model[:,4,0],'-k',linewidth=3.0)
-    plt.plot(Data[:,0],Data[:,3],'+k')
+    plt.plot(Data[:,0],Data[:,col],'+k')
     plt.ylim((0.295,0.405)) 
     plt.ylabel("seawater d88/86Sr [permil]")
     plt.xlim((-2,37))
@@ -227,7 +238,7 @@ if (True):
         else:
             plt.plot(ModelDT[:,0,run],ModelDT[:,4,run],'-b')
     plt.plot(ModelDT[:,0,0],ModelDT[:,4,0],'-k',linewidth=3.0)
-    plt.plot(Data[:,0],Data[:,3],'+k')
+    plt.plot(Data[:,0],Data[:,col],'+k')
     plt.ylim((0.295,0.405))
     plt.xlim((-2,37))
     plt.grid()
@@ -355,6 +366,8 @@ if (False):
     plt.grid()
 
     plt.savefig("SrInverse_V0.png")
+    plt.savefig("Figure_Sc5_eps018_N30.png")
+    plt.savefig("Figure_Sc5_eps018_N30.ps")
     plt.show()
     print(Model)    
 
