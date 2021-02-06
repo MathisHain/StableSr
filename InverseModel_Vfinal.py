@@ -7,7 +7,7 @@ class StableStrontium():
     def __init__(self,Fin=38e9, Sr0=88e-6 * 1.4e21, eps=-0.18, polyN=7, Nruns=30):
         
         self.Nruns = Nruns
-        self.Data = self.LoadDataSc(0)
+        self.Data = self.LoadDataSc("Sc5")
         col = 1
         (p,pd,xp,error) = self.FitPoly(self.Data, col, polyN)
         dmean = np.mean(p(xp))
@@ -233,11 +233,9 @@ class StableStrontium():
         Data[:,3] = Data[:,1]+0.538
         return Data
 
-    def LoadDataSc(self,skiptoprows):
-        #Data = np.genfromtxt('RawData.txt', dtype=float, delimiter='\t')
-        #Data = np.genfromtxt('Sc1.txt', dtype=float, delimiter='\t')
-        Data = np.genfromtxt('Sc5.txt', dtype=float, delimiter='\t') # This is the scenario we picked for the 07/2020 submission
-        Data = Data[skiptoprows:,:]
+    def LoadDataSc(self,Sc):
+
+        Data = np.genfromtxt('{}.txt'.format(Sc), dtype=float, delimiter='\t') # This is the scenario (Sc5) we picked for the 07/2020 submission
         return Data
 
     def DataDerivative(self,Data):
