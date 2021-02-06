@@ -6,9 +6,10 @@ class StableStrontium():
     
     def __init__(self,Fin=38e9, Sr0=88e-6 * 1.4e21, eps=-0.18, polyN=7, Nruns=30):
         
+        self.Nruns = Nruns
         self.Data = self.LoadDataSc(0)
         col = 1
-        (p,pd,xp,error) = self.FitPoly(Data, col, polyN)
+        (p,pd,xp,error) = self.FitPoly(self.Data, col, polyN)
         dmean = np.mean(p(xp))
         print("The mean d88Sr of the polynomial fit at sample times: ", dmean)
 
@@ -18,13 +19,13 @@ class StableStrontium():
         din = dmean + eps
         print("The assumed d88Sr Sr input required for secular balance: ",din)
         
-        SingleModel = IntegrateConstFin(pd,Fin,Sr0,dsw0,din,eps)
+        SingleModel = self.IntegrateConstFin(pd,Fin,Sr0,dsw0,din,eps)
         
         self.MCModel = np.zeros((351,7,Nruns+1))
         self.MCModelDT = np.zeros((351,7,Nruns+1))
         self.MCddiff = np.zeros(Nruns+1)
         self.MCtrend = np.zeros(Nruns+1)
-        (self.MCModel[:,:,0],self.MCModelDT[:,:,0]) = IntegrateConstFin(pd,Fin,Sr0,dsw0,din,eps)
+        (self.MCModel[:,:,0],self.MCModelDT[:,:,0]) = self.IntegrateConstFin(pd,Fin,Sr0,dsw0,din,eps)
         self.MCddiff[0] = din - (dmean + eps)
         
         for run in range(1,Nruns+1):
@@ -32,15 +33,19 @@ class StableStrontium():
                 dinE = din + 0.01*np.random.randn()
                 epsE = eps + 0.005*np.random.randn()
                 self.MCddiff[run] = dinE - (dmean + epsE)
-                (self.MCModel[:,:,run],self.MCModelDT[:,:,run]) = IntegrateConstFin(pd,Fin,Sr0,dsw0,dinE,epsE)
+                (self.MCModel[:,:,run],self.MCModelDT[:,:,run]) = self.IntegrateConstFin(pd,Fin,Sr0,dsw0,dinE,epsE)
                 #Model = np.stack((Model,NewModel),axis=2)
-                if (np.min(Model[:,1,run])>0):
+                if (np.min(self.MCModel[:,1,run])>0):
                     break  
             print("Done with run {0}".format(run))
             
     
     def PublishedFigure(self):
-        Model=self.MCModel, ModelDT=self.MCModelDT, Data=self.Data
+        Model=self.MCModel
+        ModelDT=self.MCModelDT
+        Data=self.Data
+        ddiff = self.MCddiff
+        col = 1
         
         import matplotlib.pyplot as plt
         plt.figure(1,figsize=(10,8))
@@ -60,7 +65,7 @@ class StableStrontium():
     
     
         plt.subplot(322)
-        for run in range(1,Nruns+1):
+        for run in range(1,self.Nruns+1):
             if (ddiff[run]>0):
                 plt.plot(ModelDT[:,0,run],ModelDT[:,4,run],'-r')
             else:
@@ -73,7 +78,7 @@ class StableStrontium():
     
     
         plt.subplot(323)
-        for run in range(1,Nruns+1):
+        for run in range(1,self.Nruns+1):
             if (ddiff[run]>0):
                 plt.plot(Model[:,0,run],-1e6*1e-15*(Model[:,2,run]-Model[:,3,run]),'-r')
             else:
@@ -87,7 +92,7 @@ class StableStrontium():
     
     
         plt.subplot(324)
-        for run in range(1,Nruns+1):
+        for run in range(1,self.Nruns+1):
             if (ddiff[run]>0):
                 plt.plot(ModelDT[:,0,run],-1000*1e-12*(ModelDT[:,2,run]-ModelDT[:,3,run]),'-r')
             else:
@@ -101,7 +106,7 @@ class StableStrontium():
         L03 = self.LoadLear03()
     
         plt.subplot(325)
-        for run in range(1,Nruns+1):
+        for run in range(1,self.Nruns+1):
             if (ddiff[run]>0):
                 plt.plot(Model[:,0,run],Model[:,1,run]/1.4e21*1e6,'-r')
             else:
@@ -119,7 +124,7 @@ class StableStrontium():
         plt.xlim((-2,37))
     
         plt.subplot(326)
-        for run in range(1,Nruns+1):
+        for run in range(1,self.Nruns+1):
             if (ddiff[run]>0):
                 plt.plot(ModelDT[:,0,run],ModelDT[:,1,run]/1.4e21*1e6,'-r')
             else:
@@ -141,7 +146,8 @@ class StableStrontium():
         
 
     def SingleFigure(self):
-        Model=self.Model, Data=self.Data
+        Model=self.Model
+        Data=self.Data
         
         import matplotlib.pyplot as plt
         plt.figure(2)
@@ -335,6 +341,7 @@ if __name__ == "__main__":
     import InverseModel_Vfinal as ModelLib
     
     ModelObject = ModelLib.StableStrontium()
+    ModelObject.PublishedFigure()
     
     if (False):
         # this is a legacy code fragment that serves as an illustration of how the old V0/V1 interface was used
