@@ -1,5 +1,5 @@
 # StableSr
-# Inverse inverse/forward model of stable Sr isotope data of Payton and colleagues
+# Inverse inverse/forward model of stable Sr isotope data of Paytan and colleagues
 # Author: Mathis Hain, mhain at ucsc.edu, mathis-hain.net
 # Reference: Paytan et al. (2021), A 35 Myr Record of Seawater Stable Sr Isotopes Reveals a Fluctuating Global Carbon Cycle, Science, doi: TBD
 
